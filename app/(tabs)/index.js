@@ -1,78 +1,78 @@
-import { Ionicons } from '@expo/vector-icons'; // Biblioteca de ícones que já vem no Expo
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import React from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StorageService } from '../../src/services/StorageService';
+// Importamos os dados iniciais para saber quem resetar
+import { coroinhasData } from '../../src/data/coroinhas';
 
 export default function Home() {
+  const router = useRouter();
+
+  const handleReiniciarMês = () => {
+    Alert.alert(
+      "Reiniciar Mês",
+      "Deseja limpar o histórico e ZERAR os pesos de todos os coroinhas?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        { 
+          text: "Sim, Reiniciar", 
+          style: "destructive", 
+          onPress: async () => {
+            // Chamamos a nova função que zera tudo
+            const coroinhasAtuais = await StorageService.listarCoroinhas(coroinhasData);
+            await StorageService.reiniciarMesCompleto(coroinhasAtuais);
+            
+            Alert.alert("Sucesso", "Histórico apagado e pesos zerados!");
+          } 
+        }
+      ]
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        
-        {/* Header de Boas Vindas */}
         <View style={styles.header}>
           <Text style={styles.saudacao}>Olá, Coordenador!</Text>
           <Text style={styles.subtitulo}>Paróquia Santa Maria</Text>
         </View>
 
-        {/* Card de Próxima Missa (Destaque) */}
-        <View style={styles.cardDestaque}>
-          <Text style={styles.labelDestaque}>PRÓXIMA MISSA</Text>
-          <Text style={styles.tituloMissa}>Missa de Domingo</Text>
-          <Text style={styles.dataMissa}>08 de Fevereiro às 19h</Text>
-          <TouchableOpacity style={styles.botaoQuickEscala}>
-            <Text style={styles.textoBotaoBranco}>VER ESCALA ATUAL</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Menu de Atalhos */}
         <Text style={styles.tituloSecao}>Gerenciamento</Text>
         
         <View style={styles.gridMenu}>
-          <TouchableOpacity style={styles.itemMenu}>
+          {/* Botão Nova Missa */}
+          <TouchableOpacity style={styles.itemMenu} onPress={() => router.push('/missas')}>
             <View style={[styles.circuloIcone, {backgroundColor: '#E0F2F1'}]}>
-              <Ionicons name="calendar" size={28} color="#20B2AA" />
-            </View>
-            <Text style={styles.textoMenu}>Histórico</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.itemMenu}>
-            <View style={[styles.circuloIcone, {backgroundColor: '#E0F2F1'}]}>
-              <Ionicons name="add-circle" size={28} color="#20B2AA" />
+              <Ionicons name="add-circle-outline" size={30} color="#20B2AA" />
             </View>
             <Text style={styles.textoMenu}>Nova Missa</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.itemMenu}>
+          {/* Botão Coroinhas */}
+          <TouchableOpacity style={styles.itemMenu} onPress={() => router.push('/coroinhas')}>
             <View style={[styles.circuloIcone, {backgroundColor: '#E0F2F1'}]}>
-              <Ionicons name="people" size={28} color="#20B2AA" />
+              <Ionicons name="people-outline" size={30} color="#20B2AA" />
             </View>
             <Text style={styles.textoMenu}>Coroinhas</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.itemMenu}>
+          {/* Botão Histórico */}
+          <TouchableOpacity style={styles.itemMenu} onPress={() => router.push('/historico')}>
             <View style={[styles.circuloIcone, {backgroundColor: '#E0F2F1'}]}>
-              <Ionicons name="settings" size={28} color="#20B2AA" />
+              <Ionicons name="list-outline" size={30} color="#20B2AA" />
             </View>
-            <Text style={styles.textoMenu}>Ajustes</Text>
+            <Text style={styles.textoMenu}>Histórico</Text>
+          </TouchableOpacity>
+
+          {/* Botão Reiniciar Mês */}
+          <TouchableOpacity style={styles.itemMenu} onPress={handleReiniciarMês}>
+            <View style={[styles.circuloIcone, {backgroundColor: '#FFEBEE'}]}>
+              <Ionicons name="refresh-circle-outline" size={30} color="#FF5252" />
+            </View>
+            <Text style={styles.textoMenu}>Reiniciar Mês</Text>
           </TouchableOpacity>
         </View>
-
-        {/* Espaço Coroinhas (Resumo rápido) */}
-        <View style={styles.secaoCoroinhas}>
-          <View style={styles.headerSecao}>
-            <Text style={styles.tituloSecao}>Coroinhas Ativos</Text>
-            <TouchableOpacity><Text style={styles.verTodos}>Ver todos</Text></TouchableOpacity>
-          </View>
-          
-          <View style={styles.miniCard}>
-            <Text style={styles.nomeMiniCard}>Amós</Text>
-            <Text style={styles.nivelMiniCard}>Nível 4</Text>
-          </View>
-          <View style={styles.miniCard}>
-            <Text style={styles.nomeMiniCard}>Débora</Text>
-            <Text style={styles.nivelMiniCard}>Nível 4</Text>
-          </View>
-        </View>
-
       </ScrollView>
     </SafeAreaView>
   );
@@ -81,32 +81,24 @@ export default function Home() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FBFB' },
   scrollContent: { padding: 20 },
-  header: { marginBottom: 25, marginTop: 10 },
+  header: { marginBottom: 30, marginTop: 20 },
   saudacao: { fontSize: 24, fontWeight: 'bold', color: '#333' },
-  subtitulo: { fontSize: 16, color: '#20B2AA', fontWeight: '500' },
-  cardDestaque: { 
-    backgroundColor: '#20B2AA', 
-    padding: 20, 
-    borderRadius: 20, 
-    elevation: 5,
-    shadowColor: '#20B2AA',
-    shadowOpacity: 0.3,
-    shadowRadius: 10
-  },
-  labelDestaque: { color: '#E0F2F1', fontSize: 12, fontWeight: 'bold', marginBottom: 5 },
-  tituloMissa: { color: 'white', fontSize: 22, fontWeight: 'bold' },
-  dataMissa: { color: 'white', fontSize: 16, marginBottom: 15, opacity: 0.9 },
-  botaoQuickEscala: { backgroundColor: 'rgba(255,255,255,0.2)', padding: 10, borderRadius: 10, alignItems: 'center' },
-  textoBotaoBranco: { color: 'white', fontWeight: 'bold' },
-  tituloSecao: { fontSize: 18, fontWeight: 'bold', color: '#333', marginTop: 25, marginBottom: 15 },
+  subtitulo: { fontSize: 16, color: '#20B2AA' },
+  tituloSecao: { fontSize: 18, fontWeight: 'bold', color: '#333', marginBottom: 20 },
   gridMenu: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-  itemMenu: { width: '47%', backgroundColor: 'white', padding: 20, borderRadius: 15, alignItems: 'center', marginBottom: 15, elevation: 2 },
+  itemMenu: { 
+    width: '47%', 
+    backgroundColor: 'white', 
+    padding: 20, 
+    borderRadius: 15, 
+    alignItems: 'center', 
+    marginBottom: 20, 
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
   circuloIcone: { width: 50, height: 50, borderRadius: 25, justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
-  textoMenu: { fontWeight: '600', color: '#444' },
-  secaoCoroinhas: { marginTop: 10 },
-  headerSecao: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  verTodos: { color: '#20B2AA', fontWeight: '600' },
-  miniCard: { backgroundColor: 'white', padding: 15, borderRadius: 12, flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8, borderWidth: 1, borderColor: '#E0F2F1' },
-  nomeMiniCard: { fontWeight: 'bold', color: '#333' },
-  nivelMiniCard: { color: '#666', fontSize: 12 }
+  textoMenu: { fontWeight: '600', color: '#444' }
 });

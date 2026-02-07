@@ -1,21 +1,14 @@
 import { useState } from 'react';
 import {
-    Alert, Clipboard,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+    Alert, Clipboard, SafeAreaView, ScrollView, StatusBar,
+    StyleSheet, Text, TextInput, TouchableOpacity, View
 } from 'react-native';
+import { coroinhasData } from '../../src/data/coroinhas';
 import { EscalaService } from '../../src/services/EscalaService';
+import { StorageService } from '../../src/services/StorageService';
 
 export default function TelaGerarEscala() {
   const [escala, setEscala] = useState(null);
-  
-  // Estados para o formulário
   const [titulo, setTitulo] = useState('Missa de Domingo');
   const [data, setData] = useState('08/02');
   const [quantidades, setQuantidades] = useState({
@@ -26,7 +19,10 @@ export default function TelaGerarEscala() {
     setQuantidades({ ...quantidades, [funcao]: valor.replace(/[^0-9]/g, '') });
   };
 
-  const executarMotor = () => {
+  const executarMotor = async () => {
+    // 1. Busca os coroinhas do banco (com pesos atualizados)
+    const coroinhasAtuais = await StorageService.listarCoroinhas(coroinhasData);
+
     const missaDigitada = {
       id: Date.now(),
       configuracao: { titulo, data, isFimDeSemana: true },
@@ -41,45 +37,56 @@ export default function TelaGerarEscala() {
       ]
     };
 
-    const resultado = EscalaService.gerarEscala(missaDigitada);
-    setEscala(resultado);
+    // 2. Gera a escala usando os dados do banco
+    const resultado = EscalaService.gerarEscala(missaDigitada, coroinhasAtuais);
+
+    if (resultado) {
+      setEscala(resultado);
+
+      // 3. Atualiza os pesos de quem foi escalado
+      const novaListaCoroinhas = coroinhasAtuais.map(coroinha => {
+        const foiEscalado = resultado.CoroinhasEscalados.find(e => e.id === coroinha.id);
+        if (foiEscalado) {
+          return { ...coroinha, peso: coroinha.peso + 1 };
+        }
+        return coroinha;
+      });
+
+      // 4. Salva tudo no Storage (Missa no histórico e Novos pesos)
+      await StorageService.salvarMissa({
+        ...resultado,
+        titulo: titulo,
+        data: data
+      });
+      await StorageService.salvarCoroinhas(novaListaCoroinhas);
+
+      Alert.alert("Sucesso", "Escala gerada! Pesos dos coroinhas atualizados.");
+    }
   };
 
   const copiarEscala = () => {
     if (!escala) return;
-    let texto = `✨ *ESCALA: ${escala.titulo} (${escala.data})*\n\n`;
+    let texto = `✨ *ESCALA: ${titulo} (${data})*\n\n`;
     escala.CoroinhasEscalados.forEach(item => {
       texto += `• ${item.funcao}: ${item.nome}\n`;
     });
     Clipboard.setString(texto);
-    Alert.alert("Copiado!", "Escala pronta para o WhatsApp! ✅");
+    Alert.alert("Copiado!");
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
       <ScrollView showsVerticalScrollIndicator={false}>
-        
         <View style={styles.header}>
-          <Text style={styles.tituloApp}>Cadastrar Missa</Text>
+          <Text style={styles.tituloApp}>Gerar Escala</Text>
         </View>
 
-        {/* Formulário de Cadastro */}
         <View style={styles.cardForm}>
-          <TextInput 
-            style={styles.inputGrande} 
-            placeholder="Título da Missa" 
-            value={titulo} 
-            onChangeText={setTitulo} 
-          />
-          <TextInput 
-            style={styles.inputGrande} 
-            placeholder="Data (ex: 08/02)" 
-            value={data} 
-            onChangeText={setData} 
-          />
+          <TextInput style={styles.inputGrande} placeholder="Título da Missa" value={titulo} onChangeText={setTitulo} />
+          <TextInput style={styles.inputGrande} placeholder="Data (ex: 08/02)" value={data} onChangeText={setData} />
 
-          <Text style={styles.labelSecao}>Numero de coroinhas:</Text>
+          <Text style={styles.labelSecao}>Número de coroinhas:</Text>
           <View style={styles.gradeInputs}>
             {Object.keys(quantidades).map((key) => (
               <View key={key} style={styles.itemInput}>
@@ -95,17 +102,15 @@ export default function TelaGerarEscala() {
           </View>
 
           <TouchableOpacity style={styles.botaoGerar} onPress={executarMotor}>
-            <Text style={styles.textoBotao}>🔄 GERAR ESCALA</Text>
+            <Text style={styles.textoBotao}>🔄 GERAR E SALVAR</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Resultado */}
         {escala && (
           <View style={styles.resultadoContainer}>
             <TouchableOpacity style={styles.botaoCopiar} onPress={copiarEscala}>
-              <Text style={styles.textoBotaoCopiar}>📋 COPIAR PARA WHATSAPP</Text>
+              <Text style={styles.textoBotaoCopiar}>📋 COPIAR ESCALA</Text>
             </TouchableOpacity>
-            
             {escala.CoroinhasEscalados.map((item, index) => (
               <View key={index} style={styles.linhaLista}>
                 <Text style={styles.textoLinha}>
@@ -124,7 +129,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F0F8F8', paddingHorizontal: 20 },
   header: { marginTop: 20, marginBottom: 15, alignItems: 'center' },
   tituloApp: { fontSize: 24, fontWeight: 'bold', color: '#20B2AA' },
-  cardForm: { backgroundColor: 'white', padding: 15, borderRadius: 15, elevation: 3, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10 },
+  cardForm: { backgroundColor: 'white', padding: 15, borderRadius: 15, elevation: 3 },
   inputGrande: { borderBottomWidth: 1, borderBottomColor: '#20B2AA', marginBottom: 15, padding: 8, fontSize: 16 },
   labelSecao: { fontWeight: 'bold', color: '#008B8B', marginBottom: 10 },
   gradeInputs: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: 20 },

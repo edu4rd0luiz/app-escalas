@@ -35,7 +35,8 @@ export default function Home() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <Text style={styles.saudacao}>Olá, Coordenador!</Text>
-          <Text style={styles.subtitulo}>Paróquia Santa Maria</Text>
+          <Text style={styles.subtitulo}>Paróquia São vicente Ferrer</Text>
+          <Text style={styles.texto}>by: eduard0_luiz</Text>
         </View>
 
         <Text style={styles.tituloSecao}>Gerenciamento</Text>
@@ -68,7 +69,7 @@ export default function Home() {
           {/* Botão Reiniciar Mês */}
           <TouchableOpacity style={styles.itemMenu} onPress={handleReiniciarMês}>
             <View style={[styles.circuloIcone, {backgroundColor: '#FFEBEE'}]}>
-              <Ionicons name="refresh-circle-outline" size={30} color="#FF5252" />
+              <Ionicons name="refresh-circle-outline" size={30} color="#f88585" />
             </View>
             <Text style={styles.textoMenu}>Reiniciar Mês</Text>
           </TouchableOpacity>
@@ -82,8 +83,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FBFB' },
   scrollContent: { padding: 20 },
   header: { marginBottom: 30, marginTop: 20 },
-  saudacao: { fontSize: 24, fontWeight: 'bold', color: '#333' },
+  saudacao: { fontSize: 24, fontWeight: 'bold', color: '#000000' },
   subtitulo: { fontSize: 16, color: '#20B2AA' },
+  texto: { fontSize: 16, color: '#e6e4e4'},
   tituloSecao: { fontSize: 18, fontWeight: 'bold', color: '#333', marginBottom: 20 },
   gridMenu: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
   itemMenu: { 

@@ -6,6 +6,29 @@ const COROINHAS_KEY = '@meus_coroinhas';
 export const StorageService = {
   // --- LÓGICA DE MISSAS (HISTÓRICO) ---
 
+  // Remove um coroinha específico da lista
+  removerCoroinha: async (id) => {
+    try {
+      const listaAtual = await StorageService.listarCoroinhas([]);
+      const novaLista = listaAtual.filter(c => c.id !== id);
+      await AsyncStorage.setItem('@meus_coroinhas', JSON.stringify(novaLista));
+      return novaLista;
+    } catch (e) {
+      console.error("Erro ao remover coroinha", e);
+      return null;
+    }
+  },
+
+  adicionarCoroinha: async (novoCoroinha) => {
+  try {
+    const listaAtual = await StorageService.listarCoroinhas([]);
+    const novaLista = [...listaAtual, novoCoroinha];
+    await AsyncStorage.setItem('@meus_coroinhas', JSON.stringify(novaLista));
+    return novaLista;
+  } catch (e) {
+    console.error("Erro ao salvar coroinha", e);
+  }
+},
 
   // Remove uma única missa pelo ID ou Index
   removerMissa: async (index) => {
@@ -20,7 +43,7 @@ export const StorageService = {
       return null;
     }
   },
-  
+
   salvarMissa: async (novaMissa) => {
     try {
       const historicoAtual = await StorageService.listarMissas();
